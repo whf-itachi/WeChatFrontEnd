@@ -1,7 +1,7 @@
-import request from '@/utils/request'
+import request from './request'
 
 // 提交工单
-export function submitTicket(data) {
+export const submitTicket = (data) => {
   return request({
     url: '/tickets/submit',
     method: 'post',
@@ -10,16 +10,15 @@ export function submitTicket(data) {
 }
 
 // 获取工单列表
-export function getTicketList(params) {
+export const getTicketList = () => {
   return request({
     url: '/tickets/list',
-    method: 'get',
-    params
+    method: 'get'
   })
 }
 
 // 获取工单详情
-export function getTicketDetail(id) {
+export const getTicketDetail = (id) => {
   return request({
     url: `/tickets/${id}`,
     method: 'get'
@@ -27,9 +26,9 @@ export function getTicketDetail(id) {
 }
 
 // 更新工单
-export function updateTicket(id, data) {
+export const updateTicket = (data) => {
   return request({
-    url: `/tickets/${id}`,
+    url: `/tickets/${data.id}`,
     method: 'put',
     data
   })
@@ -44,7 +43,7 @@ export function deleteTicket(id) {
 }
 
 // 取消工单
-export function cancelTicket(id) {
+export const cancelTicket = (id) => {
   return request({
     url: `/tickets/${id}/cancel`,
     method: 'post'

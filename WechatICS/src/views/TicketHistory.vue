@@ -15,44 +15,52 @@
         finished-text="没有更多了"
         @load="onLoad"
       >
-        <van-cell-group inset v-for="ticket in ticketList" :key="ticket.id">
-          <van-cell
-            :title="'工单号: ' + ticket.id"
-            :value="formatDate(ticket.create_at)"
-            @click="goToDetail(ticket.id)"
-          />
-          <van-cell title="机型" :value="ticket.device_model" />
-          <van-cell title="客户" :value="ticket.customer" />
-          <van-cell title="故障现象" :value="ticket.fault_phenomenon" />
-          <van-cell title="故障原因" :value="ticket.fault_reason" />
-          <van-cell title="处理方法" :value="ticket.handling_method" />
-        </van-cell-group>
+        <div class="ticket-list">
+          <div v-for="ticket in ticketList" :key="ticket.id" class="ticket-card" @click="goToDetail(ticket.id)">
+            <div class="ticket-header">
+              <span class="ticket-id">工单号：{{ ticket.id }}</span>
+              <span class="ticket-time">{{ formatDate(ticket.create_at) }}</span>
+            </div>
+            <div class="ticket-content">
+              <div class="ticket-item">
+                <span class="label">机型：</span>
+                <span class="value">{{ ticket.device_model }}</span>
+              </div>
+              <div class="ticket-item">
+                <span class="label">客户：</span>
+                <span class="value">{{ ticket.customer }}</span>
+              </div>
+              <div class="ticket-item">
+                <span class="label">故障现象：</span>
+                <span class="value">{{ truncateText(ticket.fault_phenomenon) }}</span>
+              </div>
+              <div class="ticket-item">
+                <span class="label">故障原因：</span>
+                <span class="value">{{ truncateText(ticket.fault_reason) }}</span>
+              </div>
+              <div class="ticket-item">
+                <span class="label">处理方法：</span>
+                <span class="value">{{ truncateText(ticket.handling_method) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </van-list>
     </van-pull-refresh>
 
     <!-- 空状态 -->
     <van-empty v-if="!loading && ticketList.length === 0" description="暂无工单记录" />
 
-    <!-- 操作区域 -->
-    <div class="action-section">
-      <div class="action-buttons">
-        <van-button
-          type="primary"
-          block
-          class="action-button"
-          @click="goToSubmitTicket"
-        >
-          新建工单
-        </van-button>
-        <van-button
-          plain
-          block
-          class="action-button"
-          @click="onClickLeft"
-        >
-          返回上一页
-        </van-button>
-      </div>
+    <!-- 底部提交按钮 -->
+    <div class="submit-button">
+      <van-button
+        round
+        block
+        type="primary"
+        @click="goToSubmitTicket"
+      >
+        提交工单
+      </van-button>
     </div>
   </div>
 </template>
@@ -110,15 +118,22 @@ const onClickLeft = () => {
   router.back()
 }
 
+// 跳转到提交工单页面
+const goToSubmitTicket = () => {
+  router.push('/submit-ticket')
+}
+
 // 格式化日期
 const formatDate = (date) => {
   if (!date) return ''
   return new Date(date).toLocaleString()
 }
 
-// 跳转到提交工单页面
-const goToSubmitTicket = () => {
-  router.push('/submit-ticket')
+// 截断文本
+const truncateText = (text, maxLength = 50) => {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
 }
 
 onMounted(() => {
@@ -130,30 +145,72 @@ onMounted(() => {
 .ticket-history {
   min-height: 100vh;
   background-color: #f7f8fa;
+  padding-bottom: 80px;
+}
+
+.ticket-list {
   padding: 16px;
 }
 
-:deep(.van-cell-group) {
+.ticket-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f5f5f5;
 }
 
-:deep(.van-cell__value) {
-  text-align: left;
+.ticket-id {
+  font-weight: bold;
+  color: #323233;
 }
 
-.action-section {
+.ticket-time {
+  color: #969799;
+  font-size: 14px;
+}
+
+.ticket-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ticket-item {
+  display: flex;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ticket-item .label {
+  color: #969799;
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.ticket-item .value {
+  color: #323233;
+  flex: 1;
+}
+
+.submit-button {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: 16px;
   background-color: #fff;
-  border-top: 1px solid #ebedf0;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 16px;
-}
-
-.action-button {
-  flex: 1;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
 }
 </style>
 

@@ -109,13 +109,15 @@ const onSubmit = async (values) => {
   })
 
   try {
-    await ticketStore.submitTicketAction({
+    const result = await ticketStore.submitTicketAction({
       ...values,
       user_id: userStore.userId
     })
     closeToast()
     showToast('提交成功')
-    router.push('/ticket-history')
+    setTimeout(() => {
+      router.push('/ticket-history')
+    }, 1500)
   } catch (error) {
     console.error('提交工单失败:', error)
     showToast('提交失败，请重试')

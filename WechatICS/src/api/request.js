@@ -1,54 +1,57 @@
 import axios from 'axios'
 import { showToast } from 'vant'
+import router from '@/router'
+import { useUserStore } from '@/stores/user'
 
-const service = axios.create({
+// 创建 axios 实例
+const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 5000
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
 
 // 请求拦截器
-service.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`
+request.interceptors.request.use(
+  (config) => {
+    const userStore = useUserStore()
+    if (userStore.token) {
+      config.headers.Authorization = `Bearer ${userStore.token}`
     }
     return config
   },
-  error => {
+  (error) => {
     return Promise.reject(error)
   }
 )
 
 // 响应拦截器
-service.interceptors.response.use(
-  response => {
-    const res = response.data
-    if (res.code !== 200) {
-      showToast(res.message || '请求失败')
-      return Promise.reject(new Error(res.message || '请求失败'))
-    }
-    return res.data
+request.interceptors.response.use(
+  (response) => {
+    return response.data
   },
-  error => {
+  (error) => {
     if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          localStorage.removeItem('token')
-          window.location.href = '/login'
-          break
-        case 403:
-          showToast('没有权限访问')
-          break
-        case 404:
-          showToast('请求的资源不存在')
-          break
-        case 500:
-          showToast('服务器错误')
-          break
-        default:
-          showToast(error.response.data.message || '请求失败')
+      const { status, data } = error.response
+      
+      // 处理未认证的情况
+      if (status === 401 || 
+          (data && data.detail === 'Not authenticated') ||
+          (data && data.detail && data.detail.message === '无效的认证令牌')) {
+        const userStore = useUserStore()
+        // 清除用户信息
+        userStore.logoutAction()
+        // 显示提示
+        showToast('登录已过期，请重新登录')
+        // 跳转到登录页面
+        router.push('/login')
+        return Promise.reject(new Error('未认证'))
       }
+
+      // 处理其他错误
+      const message = data?.detail?.message || data?.message || data?.detail || '请求失败'
+      showToast(message)
     } else {
       showToast('网络错误，请检查网络连接')
     }
@@ -56,4 +59,4 @@ service.interceptors.response.use(
   }
 )
 
-export default service
+export default request

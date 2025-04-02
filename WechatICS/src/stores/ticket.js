@@ -43,77 +43,49 @@ export const useTicketStore = defineStore('ticket', {
       this.error = null
     },
 
-    // 提交工单
-    async submitTicketAction(ticketData) {
-      this.setLoading(true)
-      this.clearError()
-      try {
-        const result = await submitTicket(ticketData)
-        this.ticketList.unshift(result)
-        this.total++
-        return result
-      } catch (error) {
-        this.setError(error.message || '提交工单失败')
-        throw error
-      } finally {
-        this.setLoading(false)
-      }
-    },
-
     // 获取工单列表
-    async getTicketListAction(params) {
-      this.setLoading(true)
-      this.clearError()
+    async getTicketListAction() {
       try {
-        const result = await getTicketList(params)
-        this.ticketList = result.records
-        this.total = result.total
-        this.currentPage = result.current
-        this.pageSize = result.size
+        const result = await getTicketList()
+        this.ticketList = result
         return result
       } catch (error) {
-        this.setError(error.message || '获取工单列表失败')
+        console.error('获取工单列表失败:', error)
         throw error
-      } finally {
-        this.setLoading(false)
       }
     },
 
     // 获取工单详情
     async getTicketDetailAction(id) {
-      this.setLoading(true)
-      this.clearError()
       try {
         const result = await getTicketDetail(id)
         this.currentTicket = result
         return result
       } catch (error) {
-        this.setError(error.message || '获取工单详情失败')
+        console.error('获取工单详情失败:', error)
         throw error
-      } finally {
-        this.setLoading(false)
+      }
+    },
+
+    // 提交工单
+    async submitTicketAction(data) {
+      try {
+        const result = await submitTicket(data)
+        return result
+      } catch (error) {
+        console.error('提交工单失败:', error)
+        throw error
       }
     },
 
     // 更新工单
-    async updateTicketAction(id, ticketData) {
-      this.setLoading(true)
-      this.clearError()
+    async updateTicketAction(data) {
       try {
-        const result = await updateTicket(id, ticketData)
-        const index = this.ticketList.findIndex(ticket => ticket.id === id)
-        if (index !== -1) {
-          this.ticketList[index] = result
-        }
-        if (this.currentTicket?.id === id) {
-          this.currentTicket = result
-        }
+        const result = await updateTicket(data)
         return result
       } catch (error) {
-        this.setError(error.message || '更新工单失败')
+        console.error('更新工单失败:', error)
         throw error
-      } finally {
-        this.setLoading(false)
       }
     },
 
@@ -138,23 +110,12 @@ export const useTicketStore = defineStore('ticket', {
 
     // 取消工单
     async cancelTicketAction(id) {
-      this.setLoading(true)
-      this.clearError()
       try {
         const result = await cancelTicket(id)
-        const index = this.ticketList.findIndex(ticket => ticket.id === id)
-        if (index !== -1) {
-          this.ticketList[index] = result
-        }
-        if (this.currentTicket?.id === id) {
-          this.currentTicket = result
-        }
         return result
       } catch (error) {
-        this.setError(error.message || '取消工单失败')
+        console.error('取消工单失败:', error)
         throw error
-      } finally {
-        this.setLoading(false)
       }
     },
 
