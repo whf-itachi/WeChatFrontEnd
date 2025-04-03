@@ -139,28 +139,6 @@ export const useTicketStore = defineStore('ticket', {
       } finally {
         this.setLoading(false)
       }
-    },
-
-    // 评价工单
-    async reviewTicketAction(id, reviewData) {
-      this.setLoading(true)
-      this.clearError()
-      try {
-        const result = await reviewTicket(id, reviewData)
-        const index = this.ticketList.findIndex(ticket => ticket.id === id)
-        if (index !== -1) {
-          this.ticketList[index] = result
-        }
-        if (this.currentTicket?.id === id) {
-          this.currentTicket = result
-        }
-        return result
-      } catch (error) {
-        this.setError(error.message || '评价工单失败')
-        throw error
-      } finally {
-        this.setLoading(false)
-      }
     }
   }
 }) 
