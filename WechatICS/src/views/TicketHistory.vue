@@ -42,6 +42,10 @@
                 <span class="label">处理方法：</span>
                 <span class="value">{{ truncateText(ticket.handling_method) }}</span>
               </div>
+              <div class="ticket-item">
+                <span class="label">处理人：</span>
+                <span class="value">{{ ticket.handler }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -70,6 +74,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTicketStore } from '@/stores/ticket'
 import { showToast } from 'vant'
+import { formatDate } from '@/utils/date'
 
 const router = useRouter()
 const ticketStore = useTicketStore()
@@ -121,12 +126,6 @@ const onClickLeft = () => {
 // 跳转到提交工单页面
 const goToSubmitTicket = () => {
   router.push('/submit-ticket')
-}
-
-// 格式化日期
-const formatDate = (date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleString()
 }
 
 // 截断文本

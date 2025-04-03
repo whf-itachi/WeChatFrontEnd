@@ -26,14 +26,6 @@ export function getUserInfo() {
   })
 }
 
-// 用户登出
-export function logout() {
-  return request({
-    url: '/users/logout',
-    method: 'post'
-  })
-}
-
 // 修改密码
 export function changePassword(data) {
   return request({

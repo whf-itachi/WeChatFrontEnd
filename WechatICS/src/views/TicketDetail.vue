@@ -73,6 +73,16 @@
             :rules="[{ required: true, message: '请输入处理方法' }]"
             :readonly="!isEditing"
           />
+
+          <!-- 处理人 -->
+          <van-field
+            v-model="formData.handler"
+            name="handler"
+            label="处理人"
+            placeholder="请输入处理人"
+            :rules="[{ required: true, message: '请输入处理人' }]"
+            :readonly="!isEditing"
+          />
         </van-cell-group>
 
         <!-- 操作按钮 -->
@@ -142,7 +152,8 @@ const formData = reactive({
   customer: '',
   fault_phenomenon: '',
   fault_reason: '',
-  handling_method: ''
+  handling_method: '',
+  handler: ''
 })
 
 // 获取工单详情

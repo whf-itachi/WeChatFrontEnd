@@ -3,7 +3,6 @@ import {
   login,
   register,
   getUserInfo,
-  logout,
   changePassword,
   updateUserInfo
 } from '@/api/user'
@@ -102,20 +101,11 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    async logoutAction() {
-      try {
-        this.setLoading(true)
-        this.clearError()
-        await logout()
-        this.setToken('')
-        this.setUserInfo(null)
-        return true
-      } catch (error) {
-        this.setError(error.message || '登出失败')
-        return false
-      } finally {
-        this.setLoading(false)
-      }
+    logoutAction() {
+      this.token = ''
+      this.userInfo = null
+      localStorage.removeItem('token')
+      localStorage.removeItem('userInfo')
     },
 
     async changePasswordAction(data) {

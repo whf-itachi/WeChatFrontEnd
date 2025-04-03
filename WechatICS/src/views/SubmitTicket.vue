@@ -61,6 +61,15 @@
           :rules="[{ required: true, message: '请输入处理方法' }]"
         />
 
+        <!-- 处理人 -->
+        <van-field
+          v-model="formData.handler"
+          name="handler"
+          label="处理人"
+          placeholder="请输入处理人"
+          :rules="[{ required: true, message: '请输入处理人' }]"
+        />
+
         <!-- 提交按钮 -->
         <div class="submit-button">
           <van-button
@@ -97,6 +106,7 @@ const formData = reactive({
   fault_phenomenon: '',
   fault_reason: '',
   handling_method: '',
+  handler: '',
   user_id: userStore.userId
 })
 
