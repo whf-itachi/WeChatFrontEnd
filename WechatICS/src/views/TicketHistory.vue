@@ -2,7 +2,7 @@
   <div class="ticket-history">
     <!-- 顶部导航栏 -->
     <van-nav-bar
-      title="工单历史"
+      title="所有工单"
       left-arrow
       @click-left="onClickLeft"
     />
@@ -78,7 +78,7 @@
         type="primary"
         @click="goToSubmitTicket"
       >
-        提交工单
+        新建工单
       </van-button>
     </div>
   </div>

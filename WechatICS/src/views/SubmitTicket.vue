@@ -112,7 +112,6 @@ import { useRouter } from 'vue-router'
 import { useTicketStore } from '@/stores/ticket'
 import { useUserStore } from '@/stores/user'
 import { showToast, showLoadingToast, closeToast } from 'vant'
-import axios from 'axios'
 
 const router = useRouter()
 const ticketStore = useTicketStore()
