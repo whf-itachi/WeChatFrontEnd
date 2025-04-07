@@ -16,7 +16,8 @@ import {
   PullRefresh,
   Tag,
   Empty,
-  Loading
+  Loading,
+  Uploader
 } from 'vant'
 import 'vant/lib/index.css'
 import './style.css'
@@ -42,7 +43,8 @@ const vantComponents = [
   PullRefresh,
   Tag,
   Empty,
-  Loading
+  Loading,
+  Uploader
 ]
 
 vantComponents.forEach(component => {

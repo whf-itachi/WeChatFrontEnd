@@ -46,6 +46,21 @@
                 <span class="label">处理人：</span>
                 <span class="value">{{ ticket.handler }}</span>
               </div>
+              <!-- 添加附件显示 -->
+              <div v-if="ticket.attachments && ticket.attachments.length > 0" class="ticket-item">
+                <span class="label">附件：</span>
+                <span class="value">
+                  <van-tag 
+                    v-for="(file, index) in ticket.attachments" 
+                    :key="file.id"
+                    type="primary"
+                    plain
+                    class="file-tag"
+                  >
+                    {{ file.file_name }}
+                  </van-tag>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -210,6 +225,11 @@ onMounted(() => {
   padding: 16px;
   background-color: #fff;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.file-tag {
+  margin-right: 8px;
+  margin-bottom: 4px;
 }
 </style>
 

@@ -12,8 +12,18 @@
       <van-form @submit="onSubmit" v-if="ticket">
         <!-- 工单基本信息 -->
         <van-cell-group inset class="info-group">
-          <van-cell title="工单号" :value="ticket.id" />
-          <van-cell title="提交时间" :value="formatDate(ticket.create_at)" />
+          <van-field
+            :model-value="ticketId"
+            name="id"
+            label="工单号"
+            readonly
+          />
+          <van-field
+            :model-value="createTime"
+            name="create_at"
+            label="提交时间"
+            readonly
+          />
         </van-cell-group>
 
         <!-- 工单表单 -->
@@ -83,6 +93,63 @@
             :rules="[{ required: true, message: '请输入处理人' }]"
             :readonly="!isEditing"
           />
+
+          <!-- 附件显示 -->
+          <van-field
+            v-if="ticket.attachments && ticket.attachments.length > 0"
+            name="attachments"
+            label="附件"
+            readonly
+          >
+            <template #input>
+              <div class="attachments-list">
+                <van-tag
+                  v-for="file in ticket.attachments"
+                  :key="file.id"
+                  type="primary"
+                  plain
+                  class="file-tag"
+                  @click="previewFile(file)"
+                >
+                  {{ file.file_name }}
+                </van-tag>
+                <van-button
+                  v-if="isEditing"
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="startReupload"
+                >
+                  重新上传
+                </van-button>
+              </div>
+            </template>
+          </van-field>
+
+          <!-- 附件上传（编辑模式） -->
+          <van-field
+            v-if="isReuploading"
+            name="attachments"
+            label="附件"
+          >
+            <template #input>
+              <div class="upload-section">
+                <van-uploader
+                  v-model="newAttachments"
+                  :max-count="5"
+                  :max-size="50 * 1024 * 1024"
+                  :after-read="afterRead"
+                  :before-read="beforeRead"
+                  multiple
+                  accept="image/*,video/*"
+                  @delete="onDelete"
+                />
+                <div class="reupload-tip">
+                  已清空原有附件，请重新上传
+                </div>
+              </div>
+            </template>
+          </van-field>
         </van-cell-group>
 
         <!-- 操作按钮 -->
@@ -134,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTicketStore } from '@/stores/ticket'
 import { showToast, showLoadingToast, closeToast } from 'vant'
@@ -145,6 +212,8 @@ const ticketStore = useTicketStore()
 const ticket = ref(null)
 const loading = ref(false)
 const isEditing = ref(false)
+const isReuploading = ref(false)
+const newAttachments = ref([])
 
 // 表单数据
 const formData = reactive({
@@ -155,6 +224,10 @@ const formData = reactive({
   handling_method: '',
   handler: ''
 })
+
+// 计算属性
+const ticketId = computed(() => ticket.value?.id || '')
+const createTime = computed(() => formatDate(ticket.value?.create_at))
 
 // 获取工单详情
 const getTicketDetail = async () => {
@@ -177,11 +250,43 @@ const startEdit = () => {
   isEditing.value = true
 }
 
-// 取消编辑
-const cancelEdit = () => {
-  isEditing.value = false
-  // 恢复原始数据
-  Object.assign(formData, ticket.value)
+// 开始重新上传
+const startReupload = () => {
+  isReuploading.value = true
+  newAttachments.value = []
+}
+
+// 上传前校验
+const beforeRead = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isVideo = file.type.startsWith('video/')
+  
+  if (!isImage && !isVideo) {
+    showToast('请上传图片或视频文件')
+    return false
+  }
+  
+  // 检查文件大小
+  const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024 // 图片5M，视频50M
+  if (file.size > maxSize) {
+    showToast(`文件大小不能超过${isImage ? '5MB' : '50MB'}`)
+    return false
+  }
+  
+  return true
+}
+
+// 上传后处理
+const afterRead = (file) => {
+  showToast('文件已添加')
+}
+
+// 删除文件
+const onDelete = (file) => {
+  const index = newAttachments.value.indexOf(file)
+  if (index !== -1) {
+    newAttachments.value.splice(index, 1)
+  }
 }
 
 // 提交表单
@@ -193,13 +298,43 @@ const onSubmit = async (values) => {
   })
 
   try {
-    await ticketStore.updateTicketAction({
+    if (!ticket.value || !ticket.value.id) {
+      showToast('工单信息不完整')
+      return
+    }
+
+    // 创建FormData对象
+    const submitData = new FormData()
+    
+    // 添加基本字段
+    submitData.append('id', ticket.value.id)
+    submitData.append('device_model', values.device_model)
+    submitData.append('customer', values.customer)
+    submitData.append('fault_phenomenon', values.fault_phenomenon)
+    submitData.append('fault_reason', values.fault_reason || '')
+    submitData.append('handling_method', values.handling_method || '')
+    submitData.append('handler', values.handler || '')
+    
+    // 添加附件
+    if (isReuploading.value && newAttachments.value.length > 0) {
+      newAttachments.value.forEach((file) => {
+        submitData.append('attachments', file.file)
+      })
+    }
+
+    console.log('提交数据:', {
       id: ticket.value.id,
-      ...values
+      device_model: values.device_model,
+      customer: values.customer,
+      fault_phenomenon: values.fault_phenomenon,
+      attachments_count: newAttachments.value?.length || 0
     })
+
+    await ticketStore.updateTicketAction(submitData)
     closeToast()
     showToast('保存成功')
     isEditing.value = false
+    isReuploading.value = false
     // 重新获取工单详情
     await getTicketDetail()
   } catch (error) {
@@ -208,6 +343,15 @@ const onSubmit = async (values) => {
   } finally {
     loading.value = false
   }
+}
+
+// 取消编辑
+const cancelEdit = () => {
+  isEditing.value = false
+  isReuploading.value = false
+  // 恢复原始数据
+  Object.assign(formData, ticket.value)
+  newAttachments.value = []
 }
 
 // 返回上一页
@@ -223,6 +367,21 @@ const onClickLeft = () => {
 const formatDate = (date) => {
   if (!date) return ''
   return new Date(date).toLocaleString()
+}
+
+// 预览文件
+const previewFile = (file) => {
+  // 根据文件类型决定预览方式
+  if (file.file_type.startsWith('image/')) {
+    // 图片预览
+    window.open(file.file_path)
+  } else if (file.file_type.startsWith('video/')) {
+    // 视频预览
+    window.open(file.file_path)
+  } else {
+    // 其他文件下载
+    window.open(file.file_path)
+  }
 }
 
 onMounted(() => {
@@ -269,5 +428,26 @@ onMounted(() => {
 
 :deep(.van-field__control--readonly) {
   color: #323233;
+}
+
+.attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-tag {
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.upload-section {
+  width: 100%;
+}
+
+.reupload-tip {
+  color: #ff976a;
+  font-size: 12px;
+  margin-top: 8px;
 }
 </style> 

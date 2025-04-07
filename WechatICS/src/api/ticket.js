@@ -5,7 +5,10 @@ export const submitTicket = (data) => {
   return request({
     url: '/tickets/submit',
     method: 'post',
-    data
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   })
 }
 
@@ -27,10 +30,14 @@ export const getTicketDetail = (id) => {
 
 // 更新工单
 export const updateTicket = (data) => {
+  const id = data.get('id')
   return request({
-    url: `/tickets/${data.id}`,
+    url: `/tickets/${id}`,
     method: 'put',
-    data
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   })
 }
 

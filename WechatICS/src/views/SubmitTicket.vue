@@ -70,6 +70,25 @@
           :rules="[{ required: true, message: '请输入处理人' }]"
         />
 
+        <!-- 附件上传 -->
+        <van-field
+          name="attachments"
+          label="附件"
+        >
+          <template #input>
+            <van-uploader
+              v-model="formData.attachments"
+              :max-count="5"
+              :max-size="50 * 1024 * 1024"
+              :after-read="afterRead"
+              :before-read="beforeRead"
+              multiple
+              accept="image/*,video/*"
+              @delete="onDelete"
+            />
+          </template>
+        </van-field>
+
         <!-- 提交按钮 -->
         <div class="submit-button">
           <van-button
@@ -93,6 +112,7 @@ import { useRouter } from 'vue-router'
 import { useTicketStore } from '@/stores/ticket'
 import { useUserStore } from '@/stores/user'
 import { showToast, showLoadingToast, closeToast } from 'vant'
+import axios from 'axios'
 
 const router = useRouter()
 const ticketStore = useTicketStore()
@@ -107,8 +127,43 @@ const formData = reactive({
   fault_reason: '',
   handling_method: '',
   handler: '',
-  user_id: userStore.userId
+  user_id: userStore.userId,
+  attachments: [] // 添加附件数组
 })
+
+// 上传前校验
+const beforeRead = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isVideo = file.type.startsWith('video/')
+  
+  if (!isImage && !isVideo) {
+    showToast('请上传图片或视频文件')
+    return false
+  }
+  
+  // 检查文件大小
+  const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024 // 图片5M，视频50M
+  if (file.size > maxSize) {
+    showToast(`文件大小不能超过${isImage ? '5MB' : '50MB'}`)
+    return false
+  }
+  
+  return true
+}
+
+// 上传后处理
+const afterRead = (file) => {
+  // 文件已经通过验证，直接添加到表单数据中
+  showToast('文件已添加')
+}
+
+// 删除文件
+const onDelete = (file) => {
+  const index = formData.attachments.indexOf(file)
+  if (index !== -1) {
+    formData.attachments.splice(index, 1)
+  }
+}
 
 // 提交表单
 const onSubmit = async (values) => {
@@ -119,10 +174,37 @@ const onSubmit = async (values) => {
   })
 
   try {
-    const result = await ticketStore.submitTicketAction({
-      ...values,
-      user_id: userStore.userId
+    // 创建FormData对象
+    const submitData = new FormData()
+    
+    // 添加基本字段
+    submitData.append('device_model', values.device_model)
+    submitData.append('customer', values.customer)
+    submitData.append('fault_phenomenon', values.fault_phenomenon)
+    submitData.append('fault_reason', values.fault_reason || '')
+    submitData.append('handling_method', values.handling_method || '')
+    submitData.append('handler', values.handler || '')
+    submitData.append('user_id', userStore.userId)
+    
+    // 添加附件
+    if (formData.attachments && formData.attachments.length > 0) {
+      formData.attachments.forEach((file) => {
+        submitData.append('attachments', file.file)
+      })
+    }
+
+    console.log('提交数据:', {
+      device_model: values.device_model,
+      customer: values.customer,
+      fault_phenomenon: values.fault_phenomenon,
+      user_id: userStore.userId,
+      attachments_count: formData.attachments?.length || 0
     })
+
+    // 提交工单
+    const result = await ticketStore.submitTicketAction(submitData)
+    console.log('提交结果:', result)
+    
     closeToast()
     showToast('提交成功')
     setTimeout(() => {
@@ -130,7 +212,7 @@ const onSubmit = async (values) => {
     }, 1500)
   } catch (error) {
     console.error('提交工单失败:', error)
-    showToast('提交失败，请重试')
+    showToast(error.message || '提交失败，请重试')
   } finally {
     loading.value = false
   }
