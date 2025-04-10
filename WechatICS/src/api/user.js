@@ -12,7 +12,7 @@ export function login(data) {
 // 用户注册
 export function register(data) {
   return request({
-    url: '/users',
+    url: '/users/register',
     method: 'post',
     data
   })
