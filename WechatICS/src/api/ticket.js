@@ -12,10 +12,18 @@ export const submitTicket = (data) => {
   })
 }
 
-// 获取工单列表
-export const getTicketList = () => {
+// 获取所有工单列表
+export const getAllTicketList = () => {
   return request({
     url: '/tickets/list',
+    method: 'get'
+  })
+}
+
+// 根据用户id获取工单列表
+export const getTicketList = () => {
+  return request({
+    url: '/tickets/my-tickets',
     method: 'get'
   })
 }

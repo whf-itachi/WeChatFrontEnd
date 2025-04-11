@@ -62,9 +62,11 @@ export const useUserStore = defineStore('user', {
           }
           return true
         }
+        this.setError(result.message || '登录失败')
         return false
       } catch (error) {
-        this.setError(error.message || '登录失败')
+        const errorMessage = error.response?.data?.detail || error.message || '登录失败'
+        this.setError(errorMessage)
         return false
       } finally {
         this.setLoading(false)

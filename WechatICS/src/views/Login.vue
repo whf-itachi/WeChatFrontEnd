@@ -91,13 +91,17 @@ const onSubmit = async (values) => {
   })
 
   try {
-    await userStore.loginAction(values)
+    const success = await userStore.loginAction(values)
     closeToast()
-    showToast('登录成功')
-    router.push('/ticket-history')
+    if (success) {
+      showToast('登录成功')
+      router.push('/ticket-history')
+    } else {
+      showToast(userStore.error || '登录失败，请重试')
+    }
   } catch (error) {
     console.error('登录失败:', error)
-    showToast('登录失败，请重试')
+    showToast(error.message || '登录失败，请重试')
   } finally {
     loading.value = false
   }
