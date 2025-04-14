@@ -78,8 +78,8 @@
           <template #input>
             <van-uploader
               v-model="formData.attachments"
-              :max-count="5"
-              :max-size="50 * 1024 * 1024"
+              :max-count="10"
+              :max-size="600 * 1024 * 1024"
               :after-read="afterRead"
               :before-read="beforeRead"
               multiple
@@ -141,9 +141,9 @@ const beforeRead = (file) => {
   }
   
   // 检查文件大小
-  const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024 // 图片5M，视频50M
+  const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024 // 图片20M，视频500M
   if (file.size > maxSize) {
-    showToast(`文件大小不能超过${isImage ? '5MB' : '50MB'}`)
+    showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
     return false
   }
   
