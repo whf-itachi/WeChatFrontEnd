@@ -439,6 +439,9 @@ onMounted(() => {
 .file-tag {
   cursor: pointer;
   margin-bottom: 4px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .upload-section {
