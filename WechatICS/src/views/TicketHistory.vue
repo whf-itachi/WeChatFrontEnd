@@ -157,7 +157,9 @@ onMounted(() => {
 
 <style scoped>
 .ticket-history {
-  min-height: 100vh;
+  width: 100vw; /* 限制为视口宽度 */
+  overflow-x: hidden; /* 禁止横向滚动 */
+  min-height: 100vh;  /* 确保视口高度 */
   background-color: #f7f8fa;
   padding-bottom: 80px;
 }
@@ -172,6 +174,7 @@ onMounted(() => {
   padding: 16px;
   margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  max-width: 100%; /* 防止内容溢出 */
 }
 
 .ticket-header {
@@ -230,6 +233,12 @@ onMounted(() => {
 .file-tag {
   margin-right: 8px;
   margin-bottom: 4px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
 }
 </style>
 
