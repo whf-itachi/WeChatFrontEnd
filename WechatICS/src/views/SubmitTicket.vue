@@ -132,28 +132,105 @@ const formData = reactive({
 
 // 上传前校验
 const beforeRead = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isVideo = file.type.startsWith('video/')
-  
-  if (!isImage && !isVideo) {
-    showToast('请上传图片或视频文件')
-    return false
+  // 处理多文件选择的情况
+  if (Array.isArray(file)) {
+    // 检查总文件数量
+    if (formData.attachments.length + file.length > 10) {
+      showToast('最多只能上传10个文件')
+      return false
+    }
+
+    // 检查每个文件
+    for (const item of file) {
+      const isImage = item.type.startsWith('image/')
+      const isVideo = item.type.startsWith('video/')
+      
+      if (!isImage && !isVideo) {
+        showToast('请上传图片或视频文件')
+        return false
+      }
+      
+      // 检查文件大小
+      const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024
+      if (item.size > maxSize) {
+        showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
+        return false
+      }
+    }
+
+    // 检查总文件大小
+    const currentTotalSize = formData.attachments.reduce((sum, item) => sum + item.file.size, 0)
+    const newTotalSize = file.reduce((sum, item) => sum + item.size, 0)
+    if (currentTotalSize + newTotalSize > 600 * 1024 * 1024) {
+      showToast('所有文件总大小不能超过600MB')
+      return false
+    }
+
+    return true
+  } else {
+    // 处理单个文件的情况
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    
+    if (!isImage && !isVideo) {
+      showToast('请上传图片或视频文件')
+      return false
+    }
+    
+    // 检查文件大小
+    const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024
+    if (file.size > maxSize) {
+      showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
+      return false
+    }
+    
+    // 检查总文件数量
+    if (formData.attachments.length >= 10) {
+      showToast('最多只能上传10个文件')
+      return false
+    }
+    
+    // 检查总文件大小
+    const totalSize = formData.attachments.reduce((sum, item) => sum + item.file.size, 0) + file.size
+    if (totalSize > 600 * 1024 * 1024) {
+      showToast('所有文件总大小不能超过600MB')
+      return false
+    }
+    
+    return true
   }
-  
-  // 检查文件大小
-  const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024 // 图片20M，视频500M
-  if (file.size > maxSize) {
-    showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
-    return false
-  }
-  
-  return true
 }
 
 // 上传后处理
 const afterRead = (file) => {
-  // 文件已经通过验证，直接添加到表单数据中
-  showToast('文件已添加')
+  // 处理多文件选择的情况
+  if (Array.isArray(file)) {
+    file.forEach(item => {
+      // 检查文件是否已存在
+      const isDuplicate = formData.attachments.some(attachment => 
+        attachment.file.name === item.file.name && 
+        attachment.file.size === item.file.size
+      )
+      
+      if (!isDuplicate) {
+        formData.attachments.push(item)
+      }
+    })
+    showToast('文件已添加')
+  } else {
+    // 处理单个文件的情况
+    const isDuplicate = formData.attachments.some(item => 
+      item.file.name === file.file.name && 
+      item.file.size === file.file.size
+    )
+    
+    if (isDuplicate) {
+      showToast('该文件已存在')
+      return
+    }
+    
+    showToast('文件已添加')
+  }
 }
 
 // 删除文件
@@ -161,6 +238,7 @@ const onDelete = (file) => {
   const index = formData.attachments.indexOf(file)
   if (index !== -1) {
     formData.attachments.splice(index, 1)
+    showToast('文件已删除')
   }
 }
 
