@@ -99,54 +99,48 @@
             v-if="ticket.attachments && ticket.attachments.length > 0"
             name="attachments"
             label="附件"
-            readonly
+            :readonly="!isEditing"
           >
             <template #input>
               <div class="attachments-list">
-                <van-tag
-                  v-for="file in ticket.attachments"
-                  :key="file.id"
-                  type="primary"
-                  plain
-                  class="file-tag"
-                  @click="previewFile(file)"
-                >
-                  {{ file.file_name }}
-                </van-tag>
-                <van-button
-                  v-if="isEditing"
-                  size="small"
-                  type="primary"
-                  plain
-                  @click="startReupload"
-                >
-                  重新上传
-                </van-button>
+                <div v-for="file in ticket.attachments" :key="file.id" class="attachment-item">
+                  <van-tag
+                    type="primary"
+                    plain
+                    class="file-tag"
+                    @click="previewFile(file)"
+                  >
+                    {{ file.file_name }}
+                  </van-tag>
+                  <van-icon
+                    v-if="isEditing"
+                    name="clear"
+                    class="delete-icon"
+                    @click.stop="deleteExistingAttachment(file)"
+                  />
+                </div>
               </div>
             </template>
           </van-field>
 
           <!-- 附件上传（编辑模式） -->
           <van-field
-            v-if="isReuploading"
-            name="attachments"
-            label="附件"
+            v-if="isEditing"
+            name="newAttachments"
+            label="新增附件"
           >
             <template #input>
               <div class="upload-section">
                 <van-uploader
                   v-model="newAttachments"
-                  :max-count="5"
-                  :max-size="50 * 1024 * 1024"
+                  :max-count="10"
+                  :max-size="600 * 1024 * 1024"
                   :after-read="afterRead"
                   :before-read="beforeRead"
                   multiple
                   accept="image/*,video/*"
                   @delete="onDelete"
                 />
-                <div class="reupload-tip">
-                  已清空原有附件，请重新上传
-                </div>
               </div>
             </template>
           </van-field>
@@ -214,6 +208,7 @@ const loading = ref(false)
 const isEditing = ref(false)
 const isReuploading = ref(false)
 const newAttachments = ref([])
+const deleteList = ref([])
 
 // 表单数据
 const formData = reactive({
@@ -248,37 +243,111 @@ const getTicketDetail = async () => {
 // 开始编辑
 const startEdit = () => {
   isEditing.value = true
-}
-
-// 开始重新上传
-const startReupload = () => {
-  isReuploading.value = true
+  // 初始化新附件数组
   newAttachments.value = []
 }
 
 // 上传前校验
 const beforeRead = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isVideo = file.type.startsWith('video/')
-  
-  if (!isImage && !isVideo) {
-    showToast('请上传图片或视频文件')
-    return false
+  // 处理多文件选择的情况
+  if (Array.isArray(file)) {
+    // 检查总文件数量
+    if (newAttachments.value.length + file.length > 10) {
+      showToast('最多只能上传10个文件')
+      return false
+    }
+
+    // 检查每个文件
+    for (const item of file) {
+      const isImage = item.type.startsWith('image/')
+      const isVideo = item.type.startsWith('video/')
+      
+      if (!isImage && !isVideo) {
+        showToast('请上传图片或视频文件')
+        return false
+      }
+      
+      // 检查文件大小
+      const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024
+      if (item.size > maxSize) {
+        showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
+        return false
+      }
+    }
+
+    // 检查总文件大小
+    const currentTotalSize = newAttachments.value.reduce((sum, item) => sum + item.file.size, 0)
+    const newTotalSize = file.reduce((sum, item) => sum + item.size, 0)
+    if (currentTotalSize + newTotalSize > 600 * 1024 * 1024) {
+      showToast('所有文件总大小不能超过600MB')
+      return false
+    }
+
+    return true
+  } else {
+    // 处理单个文件的情况
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    
+    if (!isImage && !isVideo) {
+      showToast('请上传图片或视频文件')
+      return false
+    }
+    
+    // 检查文件大小
+    const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024
+    if (file.size > maxSize) {
+      showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
+      return false
+    }
+    
+    // 检查总文件数量
+    if (newAttachments.value.length >= 10) {
+      showToast('最多只能上传10个文件')
+      return false
+    }
+    
+    // 检查总文件大小
+    const totalSize = newAttachments.value.reduce((sum, item) => sum + item.file.size, 0) + file.size
+    if (totalSize > 600 * 1024 * 1024) {
+      showToast('所有文件总大小不能超过600MB')
+      return false
+    }
+    
+    return true
   }
-  
-  // 检查文件大小
-  const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024 // 图片5M，视频50M
-  if (file.size > maxSize) {
-    showToast(`文件大小不能超过${isImage ? '5MB' : '50MB'}`)
-    return false
-  }
-  
-  return true
 }
 
 // 上传后处理
 const afterRead = (file) => {
-  showToast('文件已添加')
+  // 处理多文件选择的情况
+  if (Array.isArray(file)) {
+    file.forEach(item => {
+      // 检查文件是否已存在
+      const isDuplicate = newAttachments.value.some(attachment => 
+        attachment.file.name === item.file.name && 
+        attachment.file.size === item.file.size
+      )
+      
+      if (!isDuplicate) {
+        newAttachments.value.push(item)
+      }
+    })
+    showToast('文件已添加')
+  } else {
+    // 处理单个文件的情况
+    const isDuplicate = newAttachments.value.some(item => 
+      item.file.name === file.file.name && 
+      item.file.size === file.file.size
+    )
+    
+    if (isDuplicate) {
+      showToast('该文件已存在')
+      return
+    }
+    
+    showToast('文件已添加')
+  }
 }
 
 // 删除文件
@@ -286,6 +355,19 @@ const onDelete = (file) => {
   const index = newAttachments.value.indexOf(file)
   if (index !== -1) {
     newAttachments.value.splice(index, 1)
+    showToast('文件已删除')
+  }
+}
+
+// 删除原有附件
+const deleteExistingAttachment = (file) => {
+  const index = ticket.value.attachments.findIndex(item => item.id === file.id)
+  if (index !== -1) {
+    // 将删除的附件ID添加到删除列表
+    deleteList.value.push(file.id)
+    // 从显示列表中移除
+    ticket.value.attachments.splice(index, 1)
+    showToast('附件已删除')
   }
 }
 
@@ -315,8 +397,14 @@ const onSubmit = async (values) => {
     submitData.append('handling_method', values.handling_method || '')
     submitData.append('handler', values.handler || '')
     
-    // 添加附件
-    if (isReuploading.value && newAttachments.value.length > 0) {
+    // 添加需要删除的附件ID列表
+    if (deleteList.value.length > 0) {
+      // 将删除列表转换为JSON字符串
+      submitData.append('delete_list', JSON.stringify(deleteList.value))
+    }
+    
+    // 添加新附件
+    if (newAttachments.value.length > 0) {
       newAttachments.value.forEach((file) => {
         submitData.append('attachments', file.file)
       })
@@ -326,15 +414,16 @@ const onSubmit = async (values) => {
       id: ticket.value.id,
       device_model: values.device_model,
       customer: values.customer,
-      fault_phenomenon: values.fault_phenomenon,
-      attachments_count: newAttachments.value?.length || 0
+      delete_list: deleteList.value,
+      attachments_count: newAttachments.value.length
     })
 
     await ticketStore.updateTicketAction(submitData)
     closeToast()
     showToast('保存成功')
     isEditing.value = false
-    isReuploading.value = false
+    // 清空删除列表
+    deleteList.value = []
     // 重新获取工单详情
     await getTicketDetail()
   } catch (error) {
@@ -352,6 +441,8 @@ const cancelEdit = () => {
   // 恢复原始数据
   Object.assign(formData, ticket.value)
   newAttachments.value = []
+  // 清空删除列表
+  deleteList.value = []
 }
 
 // 返回上一页
@@ -436,12 +527,30 @@ onMounted(() => {
   gap: 8px;
 }
 
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.delete-icon {
+  color: #ee0a24;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+}
+
 .file-tag {
   cursor: pointer;
-  margin-bottom: 4px;
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 24px;
 }
 
 .upload-section {
