@@ -38,15 +38,19 @@ request.interceptors.response.use(
     return response.data
   },
   (error) => {
+    console.error('请求错误：', error)
     const { response } = error
-    const status = response?.status
-    const data = response?.data
+    
+    if (!response) {
+      showToast('网络错误，请检查网络连接')
+      return Promise.reject(error)
+    }
 
+    const status = response.status
+    const data = response.data
+    console.error('错误内容状态：', status)
     // 处理认证失败的情况
-    if (status === 401 || 
-        (data && data.detail === 'Not authenticated') ||
-        (data && data.detail && data.detail.message === '无效的认证令牌') ||
-        (data && data.detail && data.detail.errors && data.detail.errors.includes('令牌已过期或无效'))) {
+    if (status === 401) {
       // 清除用户信息
       const userStore = useUserStore()
       userStore.logoutAction()
@@ -56,16 +60,27 @@ request.interceptors.response.use(
         message: '登录已过期，请重新登录',
         duration: 2000
       })
-
-      // 延迟跳转到登录页面
+      
+      // 使用 window.location.href 进行跳转
       setTimeout(() => {
-        router.push('/login')
-      }, 1500)
+        window.location.href = '/login'
+      }, 1000)
+      
       return Promise.reject(new Error('未认证'))
     }
 
     // 获取错误信息
-    const message = data?.detail?.message || data?.message || data?.detail || '请求失败'
+    let message = '请求失败'
+    if (data) {
+      if (typeof data === 'string') {
+        message = data
+      } else if (data.detail) {
+        message = typeof data.detail === 'string' ? data.detail : data.detail.message || '请求失败'
+      } else if (data.message) {
+        message = data.message
+      }
+    }
+    
     showToast(message)
     return Promise.reject(error)
   }
