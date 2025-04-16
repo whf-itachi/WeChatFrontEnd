@@ -133,13 +133,16 @@ const onSubmit = async (values) => {
   })
 
   try {
-    await userStore.registerAction(values)
+    const success = await userStore.registerAction(values)
     closeToast()
-    showToast('注册成功，请登录')
-    router.push('/login')
+    if (success) {
+      showToast('注册成功，请登录')
+      router.push('/login')
+    } else {
+      showToast(userStore.error || '注册失败请重试')
+    }
   } catch (error) {
-    console.error('注册失败:', error)
-    showToast('注册失败，请重试')
+    showToast(error.message || '注册失败请重试')
   } finally {
     loading.value = false
   }

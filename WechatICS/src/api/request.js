@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { showToast } from 'vant'
-import router from '@/router'
+// import router from '@/router'
 import { useUserStore } from '@/stores/user'
 
 // 创建 axios 实例
@@ -48,18 +48,12 @@ request.interceptors.response.use(
 
     const status = response.status
     const data = response.data
-    console.error('错误内容状态：', status)
+
     // 处理认证失败的情况
     if (status === 401) {
       // 清除用户信息
       const userStore = useUserStore()
       userStore.logoutAction()
-      
-      // 显示提示信息
-      showToast({ 
-        message: '登录已过期，请重新登录',
-        duration: 2000
-      })
       
       // 使用 window.location.href 进行跳转
       setTimeout(() => {
@@ -80,9 +74,8 @@ request.interceptors.response.use(
         message = data.message
       }
     }
-    
-    showToast(message)
-    return Promise.reject(error)
+    console.log('message信息: ', message)
+    return Promise.reject(new Error(message))
   }
 )
 
