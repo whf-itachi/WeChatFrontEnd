@@ -6,8 +6,7 @@ import {
   updateTicket,
   deleteTicket,
   cancelTicket,
-  confirmTicket,
-  reviewTicket
+  getAllTicketsByarg
 } from '@/api/ticket'
 
 export const useTicketStore = defineStore('ticket', {
@@ -119,26 +118,21 @@ export const useTicketStore = defineStore('ticket', {
       }
     },
 
-    // 确认工单
-    async confirmTicketAction(id) {
+    // 查询包含指定字符串的工单
+    async getAllTicketsByarg(query) {
       this.setLoading(true)
       this.clearError()
       try {
-        const result = await confirmTicket(id)
-        const index = this.ticketList.findIndex(ticket => ticket.id === id)
-        if (index !== -1) {
-          this.ticketList[index] = result
-        }
-        if (this.currentTicket?.id === id) {
-          this.currentTicket = result
-        }
+        const result = await getAllTicketsByarg(query)
+        this.ticketList = result.data
+        this.total = result.total
         return result
       } catch (error) {
-        this.setError(error.message || '确认工单失败')
+        this.setError(error.message || '查询工单失败')
         throw error
       } finally {
         this.setLoading(false)
       }
     }
   }
-}) 
+})

@@ -20,6 +20,20 @@ export const getAllTicketList = () => {
   })
 }
 
+
+// 获取包含指定字段的工单列表
+export const getAllTicketsByarg = (query) => {
+  return request({
+    url: '/tickets/search',
+    method: 'get',
+    params: {
+      query
+    }
+  })
+}
+
+
+
 // 根据用户id获取工单列表
 export const getTicketList = () => {
   return request({
@@ -64,20 +78,3 @@ export const cancelTicket = (id) => {
     method: 'post'
   })
 }
-
-// 确认工单
-export function confirmTicket(id) {
-  return request({
-    url: `/tickets/${id}/confirm`,
-    method: 'post'
-  })
-}
-
-// 评价工单
-export function reviewTicket(id, data) {
-  return request({
-    url: `/tickets/${id}/review`,
-    method: 'post',
-    data
-  })
-} 

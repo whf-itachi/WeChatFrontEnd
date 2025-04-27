@@ -18,7 +18,8 @@ import {
   Empty,
   Loading,
   Uploader,
-  Icon
+  Icon,
+  Search
 } from 'vant'
 import 'vant/lib/index.css'
 import './style.css'
@@ -46,7 +47,8 @@ const vantComponents = [
   Empty,
   Loading,
   Uploader,
-  Icon
+  Icon,
+  Search
 ]
 
 vantComponents.forEach(component => {

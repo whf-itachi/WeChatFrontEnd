@@ -7,6 +7,21 @@
       @click-left="onClickLeft"
     />
 
+    <!-- 搜索框 -->
+    <div class="search-bar">
+      <van-search
+        v-model="searchKeyword"
+        shape="round"
+        placeholder="请输入查询字段"
+        @search="onSearch"
+        show-action
+      >
+        <template #action>
+          <div @click="onSearch" class="search-button">搜索</div>
+        </template>
+      </van-search>
+    </div>
+
     <!-- 工单列表 -->
     <div class="ticket-list">
       <div v-for="ticket in ticketList" :key="ticket.id" class="ticket-card" @click="goToDetail(ticket.id)">
@@ -89,12 +104,39 @@ import { formatDate } from '@/utils/date'
 const router = useRouter()
 const ticketStore = useTicketStore()
 const ticketList = ref([])
+const searchKeyword = ref('')
+
+// 搜索工单
+const onSearch = async () => {
+  try {
+    if (!searchKeyword.value.trim()) {
+      await getTicketList()
+      return
+    }
+    const result = await ticketStore.getAllTicketsByarg(searchKeyword.value)
+    console.log('搜索结果:', result)
+    if (result && Array.isArray(result)) {
+      ticketList.value = result
+    } else {
+      ticketList.value = []
+      showToast('未找到相关工单')
+    }
+  } catch (error) {
+    console.error('搜索工单失败:', error)
+    showToast('搜索工单失败')
+  }
+}
 
 // 获取工单列表
 const getTicketList = async () => {
   try {
     const result = await ticketStore.getTicketListAction()
-    ticketList.value = result
+    console.log('工单列表:', result)
+    if (result && Array.isArray(result)) {
+      ticketList.value = result
+    } else {
+      ticketList.value = []
+    }
   } catch (error) {
     console.error('获取工单列表失败:', error)
     showToast('获取工单列表失败')
@@ -214,6 +256,20 @@ onMounted(() => {
   white-space: nowrap;
   display: inline-block;
   vertical-align: middle;
+}
+
+.search-bar {
+  padding: 10px 16px;
+  background-color: #fff;
+}
+
+.search-button {
+  padding: 0 12px;
+  color: #fff;
+  background-color: #1989fa;
+  border-radius: 4px;
+  line-height: 28px;
+  font-size: 14px;
 }
 </style>
 
