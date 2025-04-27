@@ -23,6 +23,10 @@
             <span class="label">客户：</span>
             <span class="value">{{ ticket.customer }}</span>
           </div>
+          <div class="ticket-item" v-if="ticket.address">
+            <span class="label">故障地址：</span>
+            <span class="value">{{ ticket.address }}</span>
+          </div>
           <div class="ticket-item">
             <span class="label">故障现象：</span>
             <span class="value">{{ truncateText(ticket.fault_phenomenon) }}</span>

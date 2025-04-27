@@ -48,6 +48,16 @@
             :readonly="!isEditing"
           />
 
+          <van-field
+            v-model="formData.address"
+            name="address"
+            label="故障地址"
+            placeholder="请输入故障地址(非必填)"
+            :rules="[{ required: false, message: '请输入故障地址(非必填)' }]"
+            :readonly="!isEditing" 
+            v-if="isEditing || formData.address"
+          />
+
           <!-- 故障现象 -->
           <van-field
             v-model="formData.fault_phenomenon"
@@ -214,6 +224,7 @@ const deleteList = ref([])
 const formData = reactive({
   device_model: '',
   customer: '',
+  address: '',
   fault_phenomenon: '',
   fault_reason: '',
   handling_method: '',
@@ -392,6 +403,7 @@ const onSubmit = async (values) => {
     submitData.append('id', ticket.value.id)
     submitData.append('device_model', values.device_model)
     submitData.append('customer', values.customer)
+    submitData.append('address', values.address)
     submitData.append('fault_phenomenon', values.fault_phenomenon)
     submitData.append('fault_reason', values.fault_reason || '')
     submitData.append('handling_method', values.handling_method || '')
@@ -414,6 +426,7 @@ const onSubmit = async (values) => {
       id: ticket.value.id,
       device_model: values.device_model,
       customer: values.customer,
+      address: values.address,
       delete_list: deleteList.value,
       attachments_count: newAttachments.value.length
     })

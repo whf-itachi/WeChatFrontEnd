@@ -28,6 +28,15 @@
           :rules="[{ required: true, message: '请输入客户名称' }]"
         />
 
+        <!-- 客户 -->
+        <van-field
+          v-model="formData.address"
+          name="address"
+          label="地址"
+          placeholder="请输入故障设备地址(非必填)"
+          :rules="[{ required: false, message: '请输入故障设备地址(非必填)' }]"
+        />
+
         <!-- 故障现象 -->
         <van-field
           v-model="formData.fault_phenomenon"
@@ -122,6 +131,7 @@ const loading = ref(false)
 const formData = reactive({
   device_model: '',
   customer: '',
+  address: '',
   fault_phenomenon: '',
   fault_reason: '',
   handling_method: '',
@@ -257,6 +267,7 @@ const onSubmit = async (values) => {
     // 添加基本字段
     submitData.append('device_model', values.device_model)
     submitData.append('customer', values.customer)
+    submitData.append('address', values.address)
     submitData.append('fault_phenomenon', values.fault_phenomenon)
     submitData.append('fault_reason', values.fault_reason || '')
     submitData.append('handling_method', values.handling_method || '')
@@ -273,6 +284,7 @@ const onSubmit = async (values) => {
     console.log('提交数据:', {
       device_model: values.device_model,
       customer: values.customer,
+      address: values.address,
       fault_phenomenon: values.fault_phenomenon,
       user_id: userStore.userId,
       attachments_count: formData.attachments?.length || 0
