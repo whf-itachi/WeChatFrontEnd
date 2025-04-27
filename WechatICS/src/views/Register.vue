@@ -136,6 +136,7 @@ const onSubmit = async (values) => {
     const success = await userStore.registerAction(values)
     closeToast()
     if (success) {
+      userStore.clearError()
       showToast('注册成功，请登录')
       router.push('/login')
     } else {
