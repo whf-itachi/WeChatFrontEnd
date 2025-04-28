@@ -2,25 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import { 
-  Field, 
-  Button, 
-  Form, 
-  NavBar, 
-  Divider, 
-  Cell, 
-  CellGroup,
-  List, 
-  Card, 
-  Toast,
-  PullRefresh,
-  Tag,
-  Empty,
-  Loading,
-  Uploader,
-  Icon,
-  Search
-} from 'vant'
+import Vant from 'vant'
 import 'vant/lib/index.css'
 import './style.css'
 
@@ -31,28 +13,6 @@ app.use(pinia)
 app.use(router)
 
 // 注册 Vant 组件
-const vantComponents = [
-  Field,
-  Button,
-  Form,
-  NavBar,
-  Divider,
-  Cell,
-  CellGroup,
-  List,
-  Card,
-  Toast,
-  PullRefresh,
-  Tag,
-  Empty,
-  Loading,
-  Uploader,
-  Icon,
-  Search
-]
-
-vantComponents.forEach(component => {
-  app.component(component.name, component)
-})
+app.use(Vant);
 
 app.mount('#app')
