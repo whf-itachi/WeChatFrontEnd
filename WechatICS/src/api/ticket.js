@@ -78,3 +78,20 @@ export const cancelTicket = (id) => {
     method: 'post'
   })
 }
+
+
+// 获取所有机型
+export const getAllTicketDeviceModels = () => {
+  return request({
+    url: '/tickets/device_models',
+    method: 'get'
+  })
+}
+
+// 获取所有客户
+export const getAllTicketCustomers = () => {
+  return request({
+    url: '/tickets/customers',
+    method: 'get'
+  })
+}

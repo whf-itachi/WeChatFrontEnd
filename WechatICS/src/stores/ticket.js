@@ -6,7 +6,9 @@ import {
   updateTicket,
   deleteTicket,
   cancelTicket,
-  getAllTicketsByarg
+  getAllTicketsByarg,
+  getAllTicketDeviceModels,
+  getAllTicketCustomers,
 } from '@/api/ticket'
 
 export const useTicketStore = defineStore('ticket', {
@@ -133,6 +135,32 @@ export const useTicketStore = defineStore('ticket', {
       } finally {
         this.setLoading(false)
       }
+    },
+
+
+    // 获取机型列表
+    async getAllTicketDeviceModelsAction() {
+      try {
+        const result = await getAllTicketDeviceModels()
+        this.device_moldels = result
+        return result
+      } catch (error) {
+        console.error('获取工单列表失败:', error)
+        throw error
+      }
+    },
+
+    // 获取工单列表
+    async getAllTicketCustomersAction() {
+      try {
+        const result = await getAllTicketCustomers()
+        this.customers = result
+        return result
+      } catch (error) {
+        console.error('获取工单列表失败:', error)
+        throw error
+      }
     }
+
   }
 })
