@@ -35,7 +35,7 @@
             label="机型"
             placeholder="请输入机型"
             :rules="[{ required: true, message: '请输入机型' }]"
-            :readonly="!isEditing"
+            readonly 
           />
 
           <!-- 客户 -->
@@ -45,7 +45,7 @@
             label="客户"
             placeholder="请输入客户名称"
             :rules="[{ required: true, message: '请输入客户名称' }]"
-            :readonly="!isEditing"
+            readonly
           />
 
           <van-field

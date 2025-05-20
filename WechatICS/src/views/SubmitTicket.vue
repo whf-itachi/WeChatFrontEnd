@@ -10,25 +10,49 @@
     <!-- 表单区域 -->
     <div class="form-section">
       <van-form @submit="onSubmit">
-        <!-- 机型 -->
+        
+        <!-- 机型选择 -->
         <van-field
           v-model="formData.device_model"
           name="device_model"
           label="机型"
-          placeholder="请输入机型"
-          :rules="[{ required: true, message: '请输入机型' }]"
+          placeholder="请选择机型"
+          is-link
+          readonly
+          @click="showDevicePicker = true"
         />
 
-        <!-- 客户 -->
+        <van-popup v-model:show="showDevicePicker" position="bottom">
+          <van-picker
+            title="选择机型"
+            :columns="deviceOptions"
+            @confirm="onDeviceConfirm"
+            @cancel="showDevicePicker = false"
+        />
+        </van-popup>
+
+        <!-- 客户选择 -->
         <van-field
           v-model="formData.customer"
           name="customer"
           label="客户"
-          placeholder="请输入客户名称"
-          :rules="[{ required: true, message: '请输入客户名称' }]"
+          placeholder="请选择客户"
+          is-link
+          readonly
+          @click="showCustomerPicker = true"
         />
 
-        <!-- 客户 -->
+        <van-popup v-model:show="showCustomerPicker" position="bottom">
+          <van-picker
+            :columns="customerOptions"
+            title="选择客户"
+            @confirm="onCustomerConfirm"
+            @cancel="showCustomerPicker = false"
+        />
+        </van-popup>
+
+
+        <!-- 地址 -->
         <van-field
           v-model="formData.address"
           name="address"
@@ -116,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTicketStore } from '@/stores/ticket'
 import { useUserStore } from '@/stores/user'
@@ -139,6 +163,16 @@ const formData = reactive({
   user_id: userStore.userId,
   attachments: [] // 添加附件数组
 })
+
+
+// 控制弹窗显示
+const showDevicePicker = ref(false)
+const showCustomerPicker = ref(false)
+
+// Picker 列表数据
+const deviceOptions = ref([])
+const customerOptions = ref([])
+
 
 // 上传前校验
 const beforeRead = (file) => {
@@ -311,6 +345,33 @@ const onSubmit = async (values) => {
 const onClickLeft = () => {
   router.back()
 }
+
+const onDeviceConfirm = (option) => {
+  formData.device_model = option.selectedValues
+  showDevicePicker.value = false
+}
+
+const onCustomerConfirm = (option) => {
+  formData.customer = option.selectedValues
+  showCustomerPicker.value = false
+}
+
+// 初始化数据
+onMounted(async () => {
+  try {
+    const deviceRes = await ticketStore.getAllTicketDeviceModelsAction()
+    deviceOptions.value = deviceRes.data.map(item => ({
+      text: item.device_model,  // 显示给用户
+      value: item.device_model  // 提交用的值
+    }))
+
+    const customerRes = await ticketStore.getAllTicketCustomersAction()
+    customerOptions.value = customerRes.data.map(item => ({ text: item.customer, value: item.customer }))
+  } catch (err) {
+    console.error('加载选项失败:', err)
+    showToast('加载选项失败')
+  }
+})
 </script>
 
 <style scoped>
