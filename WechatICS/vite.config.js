@@ -2,8 +2,11 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
+// 根据环境变量设置 base URL
+const base = process.env.NODE_ENV === 'production' ? '/mobile/' : '/'
+
 export default defineConfig({
-  base: '/mobile/',
+  base,
   plugins: [vue()],
   resolve: {
     alias: {
