@@ -26,7 +26,13 @@
     <div class="ticket-list">
       <div v-for="ticket in ticketList" :key="ticket.id" class="ticket-card" @click="goToDetail(ticket.id)">
         <div class="ticket-header">
-          <span class="ticket-id">工单号：{{ ticket.id }}</span>
+          <span class="ticket-id">
+            <span 
+              class="status-dot" 
+              :style="{ color: ticket.status === 1 ? '#1989fa' : '#969799' }"
+            >●</span>
+            工单号：{{ ticket.id }}
+          </span>
           <span class="ticket-time">{{ formatDate(ticket.create_at) }}</span>
         </div>
         <div class="ticket-content">
@@ -201,6 +207,12 @@ onMounted(() => {
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid #f5f5f5;
+}
+
+.status-dot {
+  margin-right: 3px;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .ticket-id {
