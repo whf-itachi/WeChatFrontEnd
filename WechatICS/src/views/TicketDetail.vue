@@ -475,18 +475,11 @@ const formatDate = (date) => {
 
 // 预览文件
 const previewFile = (file) => {
-  // 根据文件类型决定预览方式
-  if (file.file_type.startsWith('image/')) {
-    // 图片预览
-    window.open(file.file_path)
-  } else if (file.file_type.startsWith('video/')) {
-    // 视频预览
-    window.open(file.file_path)
-  } else {
-    // 其他文件下载
-    window.open(file.file_path)
-  }
-}
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'; // Vite 使用方式
+
+  const previewUrl = `${apiBaseUrl}/tickets/attachment/${file.id}/preview`;
+  window.open(previewUrl, '_blank');
+};
 
 onMounted(() => {
   getTicketDetail()
