@@ -11,55 +11,33 @@
     <div class="form-section">
       <van-form @submit="onSubmit">
         
-        <!-- 机型选择 -->
+        <!-- 设备选择 -->
         <van-field
-          v-model="formData.device_model"
-          name="device_model"
-          label="机型"
-          placeholder="请选择机型"
+          v-model="formData.device_name"
+          name="device_id"
+          label="设备"
+          placeholder="请选择故障设备"
           is-link
           readonly
           @click="showDevicePicker = true"
+          :rules="[{ required: true, message: '请选择故障设备' }]"
         />
 
+        <!-- 弹出设备选择器 -->
         <van-popup v-model:show="showDevicePicker" position="bottom">
           <van-picker
-            title="选择机型"
-            :columns="deviceOptions"
+            title="选择设备"
+            :columns="deviceColumns"
             @confirm="onDeviceConfirm"
             @cancel="showDevicePicker = false"
-        />
+          />
         </van-popup>
-
-        <!-- 客户选择 -->
-        <van-field
-          v-model="formData.customer"
-          name="customer"
-          label="客户"
-          placeholder="请选择客户"
-          is-link
-          readonly
-          @click="showCustomerPicker = true"
-        />
-
-        <van-popup v-model:show="showCustomerPicker" position="bottom">
-          <van-picker
-            :columns="customerOptions"
-            title="选择客户"
-            @confirm="onCustomerConfirm"
-            @cancel="showCustomerPicker = false"
-        />
-        </van-popup>
-
-
-        <!-- 地址 -->
-        <van-field
-          v-model="formData.address"
-          name="address"
-          label="地址"
-          placeholder="请输入故障设备地址(非必填)"
-          :rules="[{ required: false, message: '请输入故障设备地址(非必填)' }]"
-        />
+        <!-- 设备详情展示（只读） -->
+        <template v-if="selectedDeviceDetail && selectedDeviceDetail.id">
+          <van-field label="设备型号" :model-value="selectedDeviceDetail.device_model" readonly />
+          <van-field label="客户" :model-value="selectedDeviceDetail.customer_name" readonly />
+          <van-field label="地址" :model-value="selectedDeviceDetail.address" readonly />
+        </template>
 
         <!-- 故障现象 -->
         <van-field
@@ -150,134 +128,134 @@ const router = useRouter()
 const ticketStore = useTicketStore()
 const userStore = useUserStore()
 const loading = ref(false)
+const deviceList = ref([])
+const deviceColumns = ref([{ values: [] }]) // 初始化为空
+const showDevicePicker = ref(false)  // 控制弹窗
+const selectedDeviceDetail = ref({})
 
 // 表单数据
 const formData = reactive({
-  device_model: '',
-  customer: '',
-  address: '',
+  device_id: '',           // 设备id
+  device_name: '',         // 设备名称
   fault_phenomenon: '',
   fault_reason: '',
   handling_method: '',
   handler: '',
   user_id: userStore.userId,
-  attachments: [] // 添加附件数组
+  attachments: []
 })
 
+// 页面加载：获取所有设备列表
+onMounted(async () => {
+  try {
+    const res = await ticketStore.getAllDevices()    
+    if (!res || !Array.isArray(res)) {
+      return
+    }
+    deviceList.value = res
+    deviceColumns.value = res.map(d => ({
+      text: d.device_name,
+      value: d.id
+    }))
+  } catch (err) {
+    console.error('加载设备失败:', err)
+  }
+})
 
-// 控制弹窗显示
-const showDevicePicker = ref(false)
-const showCustomerPicker = ref(false)
+// 设备选择确认
+const onDeviceConfirm = async ({ selectedOptions }) => {
+  const option = selectedOptions[0]
+  const selected = deviceList.value.find(d => d.id === option.value)
+  if (!selected) {
+    showToast('设备未找到')
+    return
+  }
+  formData.device_id = selected.id
+  formData.device_name = selected.device_name
+  showDevicePicker.value = false
+  try {
+    const detailRes = await ticketStore.getDeviceDetailById(selected.id)
+    selectedDeviceDetail.value = detailRes || {}
+  } catch (err) {
+    console.error('获取设备详情失败:', err)
+    showToast('获取设备详情失败')
+  }
+}
 
-// Picker 列表数据
-const deviceOptions = ref([])
-const customerOptions = ref([])
-
-
-// 上传前校验
 const beforeRead = (file) => {
-  // 处理多文件选择的情况
   if (Array.isArray(file)) {
-    // 检查总文件数量
-    if (formData.attachments.length + file.length > 10) {
+    const totalFiles = formData.attachments.length + file.length
+    if (totalFiles > 10) {
       showToast('最多只能上传10个文件')
       return false
     }
 
-    // 检查每个文件
+    let totalSize = formData.attachments.reduce((sum, item) => sum + item.file.size, 0)
     for (const item of file) {
       const isImage = item.type.startsWith('image/')
       const isVideo = item.type.startsWith('video/')
-      
-      if (!isImage && !isVideo) {
-        showToast('请上传图片或视频文件')
-        return false
-      }
-      
-      // 检查文件大小
+      if (!isImage && !isVideo) return false
+
       const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024
       if (item.size > maxSize) {
         showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
         return false
       }
+      totalSize += item.size
     }
 
-    // 检查总文件大小
-    const currentTotalSize = formData.attachments.reduce((sum, item) => sum + item.file.size, 0)
-    const newTotalSize = file.reduce((sum, item) => sum + item.size, 0)
-    if (currentTotalSize + newTotalSize > 600 * 1024 * 1024) {
+    if (totalSize > 600 * 1024 * 1024) {
       showToast('所有文件总大小不能超过600MB')
       return false
     }
-
     return true
   } else {
-    // 处理单个文件的情况
     const isImage = file.type.startsWith('image/')
     const isVideo = file.type.startsWith('video/')
-    
     if (!isImage && !isVideo) {
       showToast('请上传图片或视频文件')
       return false
     }
-    
-    // 检查文件大小
+
     const maxSize = isImage ? 20 * 1024 * 1024 : 500 * 1024 * 1024
     if (file.size > maxSize) {
       showToast(`文件大小不能超过${isImage ? '20MB' : '500MB'}`)
       return false
     }
-    
-    // 检查总文件数量
+
     if (formData.attachments.length >= 10) {
       showToast('最多只能上传10个文件')
       return false
     }
-    
-    // 检查总文件大小
+
     const totalSize = formData.attachments.reduce((sum, item) => sum + item.file.size, 0) + file.size
     if (totalSize > 600 * 1024 * 1024) {
       showToast('所有文件总大小不能超过600MB')
       return false
     }
-    
     return true
   }
 }
 
-// 上传后处理
 const afterRead = (file) => {
-  // 处理多文件选择的情况
-  if (Array.isArray(file)) {
-    file.forEach(item => {
-      // 检查文件是否已存在
-      const isDuplicate = formData.attachments.some(attachment => 
-        attachment.file.name === item.file.name && 
-        attachment.file.size === item.file.size
-      )
-      
-      if (!isDuplicate) {
-        formData.attachments.push(item)
-      }
-    })
-    showToast('文件已添加')
-  } else {
-    // 处理单个文件的情况
-    const isDuplicate = formData.attachments.some(item => 
-      item.file.name === file.file.name && 
-      item.file.size === file.file.size
+  const addFile = (f) => {
+    const isDuplicate = formData.attachments.some(attachment =>
+      attachment.file.name === f.file.name && attachment.file.size === f.file.size
     )
-    
-    if (isDuplicate) {
+    if (!isDuplicate) {
+      formData.attachments.push(f)
+      showToast('文件已添加')
+    } else {
       showToast('该文件已存在')
-      return
     }
-    
-    showToast('文件已添加')
+  }
+  if (Array.isArray(file)) {
+    file.forEach(addFile)
+  } else {
+    addFile(file)
   }
 }
 
-// 删除文件
 const onDelete = (file) => {
   const index = formData.attachments.indexOf(file)
   if (index !== -1) {
@@ -295,83 +273,38 @@ const onSubmit = async (values) => {
   })
 
   try {
-    // 创建FormData对象
     const submitData = new FormData()
-    
-    // 添加基本字段
-    submitData.append('device_model', values.device_model)
-    submitData.append('customer', values.customer)
-    submitData.append('address', values.address)
+    submitData.append('device_id', formData.device_id)
     submitData.append('fault_phenomenon', values.fault_phenomenon)
     submitData.append('fault_reason', values.fault_reason || '')
     submitData.append('handling_method', values.handling_method || '')
     submitData.append('handler', values.handler || '')
     submitData.append('user_id', userStore.userId)
-    
-    // 添加附件
-    if (formData.attachments && formData.attachments.length > 0) {
+
+    if (formData.attachments.length > 0) {
       formData.attachments.forEach((file) => {
         submitData.append('attachments', file.file)
       })
     }
 
-    console.log('提交数据:', {
-      device_model: values.device_model,
-      customer: values.customer,
-      address: values.address,
-      fault_phenomenon: values.fault_phenomenon,
-      user_id: userStore.userId,
-      attachments_count: formData.attachments?.length || 0
-    })
-
-    // 提交工单
-    const result = await ticketStore.submitTicketAction(submitData)
-    console.log('提交结果:', result)
-    
+    await ticketStore.submitTicketAction(submitData)
     closeToast()
     showToast('提交成功')
     setTimeout(() => {
       router.push('/ticket-history')
     }, 1500)
   } catch (error) {
-    console.error('提交工单失败:', error)
+    console.error('提交失败:', error)
     showToast(error.message || '提交失败，请重试')
   } finally {
     loading.value = false
   }
 }
 
-// 返回上一页
+// 返回
 const onClickLeft = () => {
   router.back()
 }
-
-const onDeviceConfirm = (option) => {
-  formData.device_model = option.selectedValues
-  showDevicePicker.value = false
-}
-
-const onCustomerConfirm = (option) => {
-  formData.customer = option.selectedValues
-  showCustomerPicker.value = false
-}
-
-// 初始化数据
-onMounted(async () => {
-  try {
-    const deviceRes = await ticketStore.getAllTicketDeviceModelsAction()
-    deviceOptions.value = deviceRes.data.map(item => ({
-      text: item.device_model,  // 显示给用户
-      value: item.device_model  // 提交用的值
-    }))
-
-    const customerRes = await ticketStore.getAllTicketCustomersAction()
-    customerOptions.value = customerRes.data.map(item => ({ text: item.customer, value: item.customer }))
-  } catch (err) {
-    console.error('加载选项失败:', err)
-    showToast('加载选项失败')
-  }
-})
 </script>
 
 <style scoped>
@@ -390,7 +323,7 @@ onMounted(async () => {
 }
 
 :deep(.van-field__label) {
-  width: 4em;
+  width: 5em;
   justify-content: flex-end;
 }
 </style>

@@ -33,14 +33,18 @@ export const getAllTicketsByarg = (query) => {
 }
 
 
-
-// 根据用户id获取工单列表
-export const getTicketList = () => {
+// 根据用户id获取工单列表（带分页）
+export const getTicketList = (page = 1, pageSize = 10) => {
   return request({
     url: '/tickets/my-tickets',
-    method: 'get'
+    method: 'get',
+    params: {
+      page,
+      pageSize
+    }
   })
 }
+
 
 // 获取工单详情
 export const getTicketDetail = (id) => {
@@ -92,6 +96,32 @@ export const getAllTicketDeviceModels = () => {
 export const getAllTicketCustomers = () => {
   return request({
     url: '/tickets/customers',
+    method: 'get'
+  })
+}
+
+// 获取所有设备
+export const getAllTicketDevices = () => {
+  return request({
+    url: '/tickets/devices',
+    method: 'get'
+  })
+}
+
+// 根据关键字搜索设备
+export const getDevicesByField = (keyword) => {
+  return request({
+    url: '/tickets/devices',
+    method: 'get',
+    params: { keyword }
+  })
+}
+
+
+// 获取某设备的详情信息
+export const getDeviceDetailById = (id) => {
+  return request({
+    url: `/tickets/devices/${id}`,
     method: 'get'
   })
 }

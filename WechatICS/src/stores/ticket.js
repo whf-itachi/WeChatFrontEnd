@@ -9,6 +9,9 @@ import {
   getAllTicketsByarg,
   getAllTicketDeviceModels,
   getAllTicketCustomers,
+  getAllTicketDevices,
+  getDeviceDetailById,
+  getDevicesByField,
 } from '@/api/ticket'
 
 export const useTicketStore = defineStore('ticket', {
@@ -45,9 +48,9 @@ export const useTicketStore = defineStore('ticket', {
     },
 
     // 获取工单列表
-    async getTicketListAction() {
+    async getTicketListAction(page, pageSize) {
       try {
-        const result = await getTicketList()
+        const result = await getTicketList(page, pageSize)
         this.ticketList = result
         return result
       } catch (error) {
@@ -160,7 +163,41 @@ export const useTicketStore = defineStore('ticket', {
         console.error('获取工单列表失败:', error)
         throw error
       }
-    }
+    },
+
+    // 获取设备编号列表
+    async getAllDevices() {
+      try {
+        const result = await getAllTicketDevices()
+        this.device_models = result
+        return result
+      } catch (error) {
+        console.error('获取工单列表失败:', error)
+        throw error
+      }
+    },
+    // 通过搜索查询设备
+    async searchDevicesByField(query) {
+      try {
+        const result = await getDevicesByField(query)
+        this.device_models = result
+        return result
+      } catch (error) {
+        console.error('获取工单列表失败:', error)
+        throw error
+      }
+    },
+
+    // 获取设备详情信息
+    async getDeviceDetailById(id) {
+      try {
+        const result = await getDeviceDetailById(id)
+        return result
+      } catch (error) {
+        console.error('获取设备详情失败:', error)
+        throw error
+      }
+    },
 
   }
 })

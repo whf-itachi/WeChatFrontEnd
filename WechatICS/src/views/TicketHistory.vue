@@ -23,12 +23,22 @@
     </div>
 
     <!-- 工单列表 -->
-    <div class="ticket-list">
-      <div v-for="ticket in ticketList" :key="ticket.id" class="ticket-card" @click="goToDetail(ticket.id)">
+    <van-list
+      v-model:loading="loading"
+      :finished="finished"
+      @load="onLoad"
+      class="ticket-list"
+    >
+      <div
+        v-for="ticket in ticketList"
+        :key="ticket.id"
+        class="ticket-card"
+        @click="goToDetail(ticket.id)"
+      >
         <div class="ticket-header">
           <span class="ticket-id">
-            <span 
-              class="status-dot" 
+            <span
+              class="status-dot"
               :style="{ color: ticket.status === 1 ? '#1989fa' : '#969799' }"
             >●</span>
             工单号：{{ ticket.id }}
@@ -64,12 +74,12 @@
             <span class="label">处理人：</span>
             <span class="value">{{ ticket.handler }}</span>
           </div>
-          <!-- 添加附件显示 -->
+          <!-- 附件 -->
           <div v-if="ticket.attachments && ticket.attachments.length > 0" class="ticket-item">
             <span class="label">附件：</span>
             <span class="value">
-              <van-tag 
-                v-for="(file, index) in ticket.attachments" 
+              <van-tag
+                v-for="(file, index) in ticket.attachments"
                 :key="file.id"
                 type="primary"
                 plain
@@ -81,10 +91,10 @@
           </div>
         </div>
       </div>
-    </div>
+    </van-list>
 
     <!-- 空状态 -->
-    <van-empty v-if="ticketList.length === 0" description="暂无工单记录" />
+    <van-empty v-if="!loading && ticketList.length === 0" description="暂无工单记录" />
 
     <!-- 底部提交按钮 -->
     <div class="submit-button">
@@ -109,60 +119,76 @@ import { formatDate } from '@/utils/date'
 
 const router = useRouter()
 const ticketStore = useTicketStore()
+
 const ticketList = ref([])
 const searchKeyword = ref('')
+const page = ref(1)
+const pageSize = ref(10)
+const loading = ref(false)
+const finished = ref(false)
+const isSearchMode = ref(false)
 
 // 搜索工单
 const onSearch = async () => {
+  const keyword = searchKeyword.value.trim()
+
+  // 清空搜索：回到分页模式
+  if (!keyword) {
+    isSearchMode.value = false
+    page.value = 1
+    ticketList.value = []
+    finished.value = false
+    await onLoad()
+    return
+  }
+
+  // 进入搜索模式：禁止 van-list 继续触底加载
+  isSearchMode.value = true
+  loading.value = false
+  finished.value = true
+
   try {
-    if (!searchKeyword.value.trim()) {
-      await getTicketList()
-      return
-    }
-    const result = await ticketStore.getAllTicketsByarg(searchKeyword.value)
-    console.log('搜索结果:', result)
-    if (result && Array.isArray(result)) {
-      ticketList.value = result
-    } else {
-      ticketList.value = []
-      showToast('未找到相关工单')
-    }
-  } catch (error) {
-    console.error('搜索工单失败:', error)
+    const result = await ticketStore.getAllTicketsByarg(keyword)
+    ticketList.value = Array.isArray(result) ? result : []
+    if (ticketList.value.length === 0) showToast('未找到相关工单')
+  } catch (e) {
+    console.error('搜索工单失败:', e)
     showToast('搜索工单失败')
   }
 }
 
-// 获取工单列表
-const getTicketList = async () => {
+// 下拉加载
+const onLoad = async () => {
+  if (isSearchMode.value) {
+    // 搜索模式下，阻止任何分页加载
+    loading.value = false
+    return
+  }
+
+  loading.value = true
   try {
-    const result = await ticketStore.getTicketListAction()
-    console.log('工单列表:', result)
-    if (result && Array.isArray(result)) {
-      ticketList.value = result
+    const result = await ticketStore.getTicketListAction(page.value, pageSize.value)
+    if (Array.isArray(result) && result.length > 0) {
+      ticketList.value = [...ticketList.value, ...result]
+      page.value += 1
     } else {
-      ticketList.value = []
+      finished.value = true
     }
   } catch (error) {
     console.error('获取工单列表失败:', error)
     showToast('获取工单列表失败')
+    finished.value = true
+  } finally {
+    loading.value = false
   }
 }
 
 // 跳转到详情页
-const goToDetail = (id) => {
-  router.push(`/ticket-detail/${id}`)
-}
-
+const goToDetail = (id) => {router.push(`/ticket-detail/${id}`)}
 // 返回上一页
-const onClickLeft = () => {
-  router.back()
-}
-
+const onClickLeft = () => {router.back()}
 // 跳转到提交工单页面
-const goToSubmitTicket = () => {
-  router.push('/submit-ticket')
-}
+const goToSubmitTicket = () => {router.push('/submit-ticket')}
 
 // 截断文本
 const truncateText = (text, maxLength = 50) => {
@@ -172,7 +198,7 @@ const truncateText = (text, maxLength = 50) => {
 }
 
 onMounted(() => {
-  getTicketList()
+  onLoad()
 })
 </script>
 

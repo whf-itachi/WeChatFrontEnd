@@ -401,6 +401,7 @@ const onSubmit = async (values) => {
     
     // 添加基本字段
     submitData.append('id', ticket.value.id)
+    submitData.append('device_id', ticket.value.device_id)
     submitData.append('device_model', values.device_model)
     submitData.append('customer', values.customer)
     submitData.append('address', values.address)
@@ -421,15 +422,6 @@ const onSubmit = async (values) => {
         submitData.append('attachments', file.file)
       })
     }
-
-    console.log('提交数据:', {
-      id: ticket.value.id,
-      device_model: values.device_model,
-      customer: values.customer,
-      address: values.address,
-      delete_list: deleteList.value,
-      attachments_count: newAttachments.value.length
-    })
 
     await ticketStore.updateTicketAction(submitData)
     closeToast()
