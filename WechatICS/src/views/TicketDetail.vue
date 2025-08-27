@@ -33,8 +33,6 @@
             v-model="formData.device_model"
             name="device_model"
             label="机型"
-            placeholder="请输入机型"
-            :rules="[{ required: true, message: '请输入机型' }]"
             readonly 
           />
 
@@ -43,8 +41,6 @@
             v-model="formData.customer"
             name="customer"
             label="客户"
-            placeholder="请输入客户名称"
-            :rules="[{ required: true, message: '请输入客户名称' }]"
             readonly
           />
 
@@ -52,10 +48,7 @@
             v-model="formData.address"
             name="address"
             label="故障地址"
-            placeholder="请输入故障地址(非必填)"
-            :rules="[{ required: false, message: '请输入故障地址(非必填)' }]"
-            :readonly="!isEditing" 
-            v-if="isEditing || formData.address"
+            readonly
           />
 
           <!-- 故障现象 -->
@@ -404,7 +397,7 @@ const onSubmit = async (values) => {
     submitData.append('device_id', ticket.value.device_id)
     submitData.append('device_model', values.device_model)
     submitData.append('customer', values.customer)
-    submitData.append('address', values.address)
+    // submitData.append('address', values.address)
     submitData.append('fault_phenomenon', values.fault_phenomenon)
     submitData.append('fault_reason', values.fault_reason || '')
     submitData.append('handling_method', values.handling_method || '')

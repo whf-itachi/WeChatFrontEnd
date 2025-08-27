@@ -9,7 +9,7 @@ import {
   getAllTicketsByarg,
   getAllTicketDeviceModels,
   getAllTicketCustomers,
-  getAllTicketDevices,
+  getAllModelsDevices,
   getDeviceDetailById,
   getDevicesByField,
 } from '@/api/ticket'
@@ -165,14 +165,14 @@ export const useTicketStore = defineStore('ticket', {
       }
     },
 
-    // 获取设备编号列表
-    async getAllDevices() {
+    // 获取设备编号列表以及设备型号信息
+    async getAllModelsDevices() {
       try {
-        const result = await getAllTicketDevices()
+        const result = await getAllModelsDevices()
         this.device_models = result
         return result
       } catch (error) {
-        console.error('获取工单列表失败:', error)
+        console.error('获取所有设备失败:', error)
         throw error
       }
     },

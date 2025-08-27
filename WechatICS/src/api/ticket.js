@@ -125,3 +125,11 @@ export const getDeviceDetailById = (id) => {
     method: 'get'
   })
 }
+
+// 获取所有设备
+export const getAllModelsDevices = () => {
+  return request({
+    url: '/tickets/devices/model_list',
+    method: 'get'
+  })
+}
