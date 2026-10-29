@@ -35,7 +35,10 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   (response) => {
-    return response.data
+    const env = response.data
+    // 后端统一信封 {code, message, data}：成功时取 data 作为业务负载，调用点无需改动
+    const payload = (env && typeof env === 'object' && 'data' in env) ? env.data : env
+    return payload
   },
   (error) => {
     console.error('请求错误：', error)
